@@ -96,20 +96,30 @@ const getNewToken = async (req, res) => {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
-    jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+    jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, async (err, decoded) => {
       if (err) {
         console.error("JWT verify error:", err);
         return res.status(403).json({ message: "Invalid refresh token" });
       }
 
+      // Fetch fresh user data so we can return themeColor
+      const user = await User.findById(decoded.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
       const newAccessToken = generateToken({
-        id: decoded.id,
-        username: decoded.username,
+        id: user._id,
+        username: user.username,
       });
 
       return res.json({
         token: newAccessToken,
-        user: { id: decoded.id, username: decoded.username },
+        user: {
+          id: user._id,
+          username: user.username,
+          themeColor: user.themeColor, // ✅ include themeColor
+        },
       });
     });
   } catch (error) {
@@ -117,6 +127,7 @@ const getNewToken = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 

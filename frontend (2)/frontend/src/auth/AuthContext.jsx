@@ -44,15 +44,18 @@ export const AuthProvider = ({ children }) => {
             if (user) {
                 setUserData(user);
                 applyTheme(user.themeColor);
+                sessionStorage.setItem("themeColor", user.themeColor); // ✅ persist theme
             }
             return true;
         } catch (err) {
             setAccessToken("");
             setUserData(null);
             sessionStorage.removeItem("accessToken");
+            sessionStorage.removeItem("themeColor"); // ✅ clear theme
             return false;
         }
     }, []);
+
 
     const login = async (data) => {
         try {
@@ -68,6 +71,7 @@ export const AuthProvider = ({ children }) => {
             if (user) {
                 setUserData(user);
                 applyTheme(user.themeColor);
+                sessionStorage.setItem("themeColor", user.themeColor); // ✅ persist theme
             }
 
             return true;
@@ -150,6 +154,26 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         if (userData?.themeColor) applyTheme(userData.themeColor);
     }, [userData]);
+
+    useEffect(() => {
+        // Restore saved theme instantly
+        const savedTheme = sessionStorage.getItem("themeColor");
+        if (savedTheme) applyTheme(savedTheme);
+
+        const initialize = async () => {
+            setupAxiosInterceptors(authRef);
+            const success = await refreshToken();
+            if (!success) {
+                setAccessToken("");
+                setUserData(null);
+                sessionStorage.removeItem("accessToken");
+                sessionStorage.removeItem("themeColor");
+            }
+            setLoading(false);
+        };
+        initialize();
+    }, [refreshToken]);
+
 
     return (
         <AuthContext.Provider
