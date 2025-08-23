@@ -30,6 +30,30 @@ export const AuthProvider = ({ children }) => {
         authRef.current.accessToken = accessToken;
     }, [accessToken]);
 
+    // const refreshToken = useCallback(async () => {
+    //     try {
+    //         const res = await axiosInstance.post("/auth/refresh-token", {}, { withCredentials: true });
+    //         const token = res?.data?.token;
+    //         const user = res?.data?.user;
+
+    //         if (token) {
+    //             setAccessToken(token);
+    //             authRef.current.accessToken = token;
+    //             sessionStorage.setItem("accessToken", token);
+    //         }
+    //         if (user) {
+    //             setUserData(user);
+    //             applyTheme(user.themeColor);
+    //         }
+    //         return true;
+    //     } catch (err) {
+    //         setAccessToken("");
+    //         setUserData(null);
+    //         sessionStorage.removeItem("accessToken");
+    //         return false;
+    //     }
+    // }, []);
+
     const refreshToken = useCallback(async () => {
         try {
             const res = await axiosInstance.post("/auth/refresh-token", {}, { withCredentials: true });
@@ -57,6 +81,29 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
 
+    // const login = async (data) => {
+    //     try {
+    //         const res = await axiosInstance.post("/auth/login", data, { withCredentials: true });
+    //         const token = res?.data?.token;
+    //         const user = res?.data?.user;
+
+    //         if (token) {
+    //             setAccessToken(token);
+    //             authRef.current.accessToken = token;
+    //             sessionStorage.setItem("accessToken", token);
+    //         }
+    //         if (user) {
+    //             setUserData(user);
+    //             applyTheme(user.themeColor);
+    //         }
+
+    //         return true;
+    //     } catch (err) {
+    //         console.error("Login failed", err);
+    //         return false;
+    //     }
+    // };
+
     const login = async (data) => {
         try {
             const res = await axiosInstance.post("/auth/login", data, { withCredentials: true });
@@ -71,8 +118,9 @@ export const AuthProvider = ({ children }) => {
             if (user) {
                 setUserData(user);
                 applyTheme(user.themeColor);
-                sessionStorage.setItem("themeColor", user.themeColor); // ✅ persist theme
+                sessionStorage.setItem("themeColor", user.themeColor); // ✅ overwrite always
             }
+
 
             return true;
         } catch (err) {
@@ -80,6 +128,7 @@ export const AuthProvider = ({ children }) => {
             return false;
         }
     };
+
 
     const logout = async () => {
         try {
@@ -107,11 +156,13 @@ export const AuthProvider = ({ children }) => {
                 }
             );
 
-            const updatedTheme = res.data?.themeColor;
-            if (updatedTheme) {
-                setUserData((prev) => ({ ...prev, themeColor: updatedTheme }));
-                applyTheme(updatedTheme);
+            const updatedUser = res.data?.user;
+            if (updatedUser) {
+                setUserData(updatedUser);
+                applyTheme(updatedUser.themeColor);
+                sessionStorage.setItem("themeColor", updatedUser.themeColor); // ✅ overwrite always
             }
+
         } catch (err) {
             console.error("Failed to save theme:", err);
         }
@@ -154,6 +205,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         if (userData?.themeColor) applyTheme(userData.themeColor);
     }, [userData]);
+
 
     useEffect(() => {
         // Restore saved theme instantly

@@ -73,13 +73,19 @@ const updateTheme = async (req, res) => {
 
     res.json({
       message: "Theme updated successfully",
-      themeColor: user.themeColor,
+      user: {
+        id: user._id,
+        username: user.username,
+        themeColor: user.themeColor,
+      },
     });
+
   } catch (error) {
     console.error("Update theme error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 
