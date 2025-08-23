@@ -1,10 +1,7 @@
-
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 const Token = require("../models/token");
 const { generateToken, generateRefreshToken } = require("../utils/token");
-
-
 
 const handleRegisterUser = async (req, res) => {
   try {
@@ -24,8 +21,6 @@ const handleRegisterUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 const handlelogin = async (req, res) => {
   try {
@@ -49,16 +44,14 @@ const handlelogin = async (req, res) => {
       user: {
         id: user._id,
         username: user.username,
-        themeColor: user.themeColor
-      }
+        themeColor: user.themeColor,
+      },
     });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 const updateTheme = async (req, res) => {
   try {
@@ -79,16 +72,11 @@ const updateTheme = async (req, res) => {
         themeColor: user.themeColor,
       },
     });
-
   } catch (error) {
     console.error("Update theme error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
-
-
 
 const getNewToken = async (req, res) => {
   try {
@@ -102,46 +90,45 @@ const getNewToken = async (req, res) => {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
-    jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, async (err, decoded) => {
-      if (err) {
-        console.error("JWT verify error:", err);
-        return res.status(403).json({ message: "Invalid refresh token" });
-      }
+    jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET,
+      async (err, decoded) => {
+        if (err) {
+          console.error("JWT verify error:", err);
+          return res.status(403).json({ message: "Invalid refresh token" });
+        }
 
-      // Fetch fresh user data so we can return themeColor
-      const user = await User.findById(decoded.id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+        const user = await User.findById(decoded.id);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
 
-      const newAccessToken = generateToken({
-        id: user._id,
-        username: user.username,
-      });
-
-      return res.json({
-        token: newAccessToken,
-        user: {
+        const newAccessToken = generateToken({
           id: user._id,
           username: user.username,
-          themeColor: user.themeColor, // ✅ include themeColor
-        },
-      });
-    });
+        });
+
+        return res.json({
+          token: newAccessToken,
+          user: {
+            id: user._id,
+            username: user.username,
+            themeColor: user.themeColor,
+          },
+        });
+      }
+    );
   } catch (error) {
     console.error("Refresh error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
-
-
 const handleLogout = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     if (refreshToken) {
-
       await Token.findOneAndDelete({ token: refreshToken });
 
       res.clearCookie("refreshToken", {
@@ -158,11 +145,10 @@ const handleLogout = async (req, res) => {
   }
 };
 
-
 module.exports = {
   handleRegisterUser,
   handlelogin,
   getNewToken,
   handleLogout,
-  updateTheme
+  updateTheme,
 };
