@@ -1,3 +1,4 @@
+
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 const Token = require("../models/token");
@@ -42,7 +43,7 @@ const handlelogin = async (req, res) => {
     res.json({
       token,
       user: {
-        id: user._id,
+        id: user._id.toString(),
         username: user.username,
         themeColor: user.themeColor,
       },
@@ -58,16 +59,27 @@ const updateTheme = async (req, res) => {
     const { themeColor } = req.body;
     const userId = req.user.id;
 
+    if (!themeColor) {
+      return res.status(400).json({ message: "Theme color is required" });
+    }
+
+    console.log("Decoded user from JWT:", req.user);
+    console.log("Looking for user with ID:", userId);
+
     const user = await User.findByIdAndUpdate(
       userId,
       { themeColor },
       { new: true }
     );
 
-    res.json({
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({
       message: "Theme updated successfully",
       user: {
-        id: user._id,
+        id: user._id.toString(),
         username: user.username,
         themeColor: user.themeColor,
       },
@@ -99,6 +111,7 @@ const getNewToken = async (req, res) => {
           return res.status(403).json({ message: "Invalid refresh token" });
         }
 
+        // Fetch fresh user data so we can return themeColor
         const user = await User.findById(decoded.id);
         if (!user) {
           return res.status(404).json({ message: "User not found" });
@@ -114,11 +127,10 @@ const getNewToken = async (req, res) => {
           user: {
             id: user._id,
             username: user.username,
-            themeColor: user.themeColor,
+            themeColor: user.themeColor, // ✅ include themeColor
           },
         });
-      }
-    );
+      });
   } catch (error) {
     console.error("Refresh error:", error);
     res.status(500).json({ message: "Server error" });
@@ -130,7 +142,6 @@ const handleLogout = async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
     if (refreshToken) {
       await Token.findOneAndDelete({ token: refreshToken });
-
       res.clearCookie("refreshToken", {
         httpOnly: true,
         secure: false,
